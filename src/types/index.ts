@@ -2,44 +2,42 @@ export type Role = 'KING' | 'MINISTER' | 'POLICE' | 'THIEF';
 
 export interface Player {
   id: string;
+  room_id: string;
   name: string;
-  isComputer: boolean;
-}
-
-export interface PlayerState {
-  player: Player;
-  role: Role | null;
-  revealed: boolean;
+  score: number;
+  is_host: boolean;
+  is_ready: boolean;
+  is_connected: boolean;
 }
 
 export type GamePhase = 
-  | 'SETUP' 
+  | 'LOBBY'
   | 'PLAYER_ROLE_REVEAL' 
   | 'KING_CALL' 
   | 'MINISTER_REVEAL' 
   | 'MINISTER_GUESS' 
   | 'ROUND_RESULT' 
-  | 'SCOREBOARD' 
   | 'GAME_OVER';
 
-export interface RoundResult {
-  roundNumber: number;
-  ministerGuessCorrect: boolean;
-  ministerGuessedPlayerId: string | null;
-  scores: Record<string, number>;
+export interface Room {
+  id: string;
+  code: string;
+  status: 'WAITING' | 'PLAYING' | 'FINISHED';
+  phase: GamePhase;
+  current_round: number;
+  total_rounds: number;
+  king_id: string | null;
+  minister_id: string | null;
+  thief_id: string | null;
+  police_id: string | null;
+  guessed_thief_id: string | null;
+  guess_correct: boolean | null;
 }
 
 export interface GameState {
+  room: Room | null;
   players: Player[];
-  playerStates: PlayerState[];
-  currentRound: number;
-  totalRounds: number;
-  phase: GamePhase;
-  scores: Record<string, number>;
-  currentPlayerRevealIndex: number;
-  roundResults: RoundResult[];
-  ministerPlayerId: string | null;
-  kingPlayerId: string | null;
-  thiefPlayerId: string | null;
-  policePlayerId: string | null;
+  myPlayerId: string | null;
+  mySecret: string | null;
+  myRole: Role | null;
 }

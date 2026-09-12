@@ -1,192 +1,199 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { GameState, GamePhase, Player, PlayerState, RoundResult } from '../types';
-import { assignRoles, calculateRoundScores } from './logic';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { GameState, GamePhase, Player, Room, Role } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface GameContextType {
   state: GameState;
-  startNewGame: (players: Player[], rounds: number) => void;
-  nextPhase: () => void;
-  revealRole: (playerIndex: number) => void;
-  startKingCall: () => void;
-  revealMinister: () => void;
-  makeMinisterGuess: (guessedPlayerId: string) => void;
-  startNextRound: () => void;
-  resetGame: () => void;
+  createRoom: (name: string, rounds: number) => Promise<void>;
+  joinRoom: (code: string, name: string) => Promise<void>;
+  startRound: () => Promise<void>;
+  setReady: () => Promise<void>;
+  updatePhase: (phase: GamePhase) => Promise<void>;
+  submitGuess: (targetId: string) => Promise<void>;
+  nextRound: () => Promise<void>;
+  leaveRoom: () => Promise<void>;
+  fetchMyRole: () => Promise<void>;
   isAudioEnabled: boolean;
   toggleAudio: () => void;
+  error: string | null;
+  clearError: () => void;
 }
 
 const defaultState: GameState = {
+  room: null,
   players: [],
-  playerStates: [],
-  currentRound: 1,
-  totalRounds: 5,
-  phase: 'SETUP',
-  scores: {},
-  currentPlayerRevealIndex: 0,
-  roundResults: [],
-  ministerPlayerId: null,
-  kingPlayerId: null,
-  thiefPlayerId: null,
-  policePlayerId: null,
+  myPlayerId: null,
+  mySecret: null,
+  myRole: null,
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const useGame = () => {
   const context = useContext(GameContext);
-  if (!context) {
-    throw new Error('useGame must be used within a GameProvider');
-  }
+  if (!context) throw new Error('useGame must be used within a GameProvider');
   return context;
 };
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<GameState>(() => {
-    const saved = localStorage.getItem('raja-mantri-state');
+    const saved = localStorage.getItem('raja-mantri-session');
     if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return defaultState;
-      }
+      try { return JSON.parse(saved); } catch (e) { return defaultState; }
     }
     return defaultState;
   });
 
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('raja-mantri-state', JSON.stringify(state));
-  }, [state]);
+    if (state.myPlayerId && state.mySecret && state.room?.id) {
+      localStorage.setItem('raja-mantri-session', JSON.stringify({
+        myPlayerId: state.myPlayerId,
+        mySecret: state.mySecret,
+        room: { id: state.room.id }
+      }));
+    } else {
+      localStorage.removeItem('raja-mantri-session');
+    }
+  }, [state.myPlayerId, state.mySecret, state.room?.id]);
 
-  const startNewGame = (players: Player[], rounds: number) => {
-    const initialScores = players.reduce((acc, p) => ({ ...acc, [p.id]: 0 }), {});
-    
-    setState({
-      ...defaultState,
-      players,
-      totalRounds: rounds,
-      scores: initialScores,
-      playerStates: assignRoles(players),
-      phase: 'PLAYER_ROLE_REVEAL',
-      currentPlayerRevealIndex: 0,
-    });
-  };
+  const generateSecret = () => crypto.randomUUID();
 
-  const revealRole = (playerIndex: number) => {
-    setState((prev) => {
-      const newPlayerStates = [...prev.playerStates];
-      newPlayerStates[playerIndex].revealed = true;
-      return { ...prev, playerStates: newPlayerStates };
-    });
-  };
+  // Subscription setup
+  useEffect(() => {
+    if (!state.room?.id) return;
 
-  const nextPhase = () => {
-    setState((prev) => {
-      if (prev.phase === 'PLAYER_ROLE_REVEAL') {
-        const nextIndex = prev.currentPlayerRevealIndex + 1;
-        if (nextIndex < prev.players.length) {
-          // Hide previous, ready for next
-          const newPlayerStates = prev.playerStates.map(ps => ({ ...ps, revealed: false }));
-          return {
-            ...prev,
-            currentPlayerRevealIndex: nextIndex,
-            playerStates: newPlayerStates,
-          };
-        } else {
-          // All revealed, move to King Call
-          return {
-            ...prev,
-            phase: 'KING_CALL',
-            kingPlayerId: prev.playerStates.find(p => p.role === 'KING')?.player.id || null,
-            ministerPlayerId: prev.playerStates.find(p => p.role === 'MINISTER')?.player.id || null,
-            thiefPlayerId: prev.playerStates.find(p => p.role === 'THIEF')?.player.id || null,
-            policePlayerId: prev.playerStates.find(p => p.role === 'POLICE')?.player.id || null,
-          };
-        }
-      }
-      return prev;
-    });
-  };
+    const roomId = state.room.id;
 
-  const startKingCall = () => {
-    setState((prev) => ({ ...prev, phase: 'MINISTER_REVEAL' }));
-  };
-
-  const revealMinister = () => {
-    setState((prev) => ({ ...prev, phase: 'MINISTER_GUESS' }));
-  };
-
-  const makeMinisterGuess = (guessedPlayerId: string) => {
-    setState((prev) => {
-      const isCorrect = guessedPlayerId === prev.thiefPlayerId;
-      const roundScores = calculateRoundScores(prev.playerStates, isCorrect);
+    // Fetch initial state
+    const fetchState = async () => {
+      const { data: roomData } = await supabase.from('rooms').select('*').eq('id', roomId).single();
+      const { data: playersData } = await supabase.from('players').select('*').eq('room_id', roomId).order('joined_at');
       
-      const newScores = { ...prev.scores };
-      Object.keys(roundScores).forEach((id) => {
-        newScores[id] = (newScores[id] || 0) + roundScores[id];
+      if (roomData && playersData) {
+        setState(s => ({ ...s, room: roomData, players: playersData }));
+      } else {
+        // Room not found or deleted
+        setState(defaultState);
+      }
+    };
+    fetchState();
+
+    const roomSub = supabase.channel(`room:${roomId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` }, (payload) => {
+        setState(s => ({ ...s, room: payload.new as Room }));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` }, async () => {
+        const { data } = await supabase.from('players').select('*').eq('room_id', roomId).order('joined_at');
+        if (data) setState(s => ({ ...s, players: data }));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(roomSub);
+    };
+  }, [state.room?.id]);
+
+  const fetchMyRole = useCallback(async () => {
+    if (!state.room?.id || !state.mySecret) return;
+    const { data, error } = await supabase.rpc('get_my_role', {
+      p_room_id: state.room.id,
+      p_secret: state.mySecret
+    });
+    if (!error && data) {
+      setState(s => ({ ...s, myRole: data as Role }));
+    }
+  }, [state.room?.id, state.mySecret]);
+
+  // Auto fetch role when entering PLAYER_ROLE_REVEAL
+  useEffect(() => {
+    if (state.room?.phase === 'PLAYER_ROLE_REVEAL' && !state.myRole) {
+      fetchMyRole();
+    }
+    if (state.room?.phase === 'LOBBY' || state.room?.phase === 'GAME_OVER') {
+      setState(s => ({ ...s, myRole: null }));
+    }
+  }, [state.room?.phase, fetchMyRole, state.myRole]);
+
+  const createRoom = async (name: string, rounds: number) => {
+    try {
+      const secret = generateSecret();
+      const { data, error } = await supabase.rpc('create_room', { p_name: name, p_secret: secret, p_rounds: rounds });
+      if (error) throw error;
+      
+      setState({
+        ...defaultState,
+        room: { id: data.room_id } as Room,
+        myPlayerId: data.player_id,
+        mySecret: secret
       });
-
-      const roundResult: RoundResult = {
-        roundNumber: prev.currentRound,
-        ministerGuessCorrect: isCorrect,
-        ministerGuessedPlayerId: guessedPlayerId,
-        scores: roundScores,
-      };
-
-      const isGameOver = prev.currentRound >= prev.totalRounds;
-
-      return {
-        ...prev,
-        scores: newScores,
-        roundResults: [...prev.roundResults, roundResult],
-        phase: 'ROUND_RESULT',
-      };
-    });
+    } catch (err: any) {
+      setError(err.message || 'Failed to create room');
+      throw err;
+    }
   };
 
-  const startNextRound = () => {
-    setState((prev) => {
-      if (prev.currentRound >= prev.totalRounds) {
-        return { ...prev, phase: 'GAME_OVER' };
-      }
+  const joinRoom = async (code: string, name: string) => {
+    try {
+      const secret = generateSecret();
+      const { data, error } = await supabase.rpc('join_room', { p_code: code.toUpperCase(), p_name: name, p_secret: secret });
+      if (error) throw error;
       
-      return {
-        ...prev,
-        currentRound: prev.currentRound + 1,
-        playerStates: assignRoles(prev.players),
-        phase: 'PLAYER_ROLE_REVEAL',
-        currentPlayerRevealIndex: 0,
-        kingPlayerId: null,
-        ministerPlayerId: null,
-        thiefPlayerId: null,
-        policePlayerId: null,
-      };
-    });
+      setState({
+        ...defaultState,
+        room: { id: data.room_id } as Room,
+        myPlayerId: data.player_id,
+        mySecret: secret
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to join room');
+      throw err;
+    }
   };
 
-  const resetGame = () => {
+  const startRound = async () => {
+    if (!state.room || !state.mySecret) return;
+    const { error } = await supabase.rpc('start_round', { p_room_id: state.room.id, p_secret: state.mySecret });
+    if (error) setError(error.message);
+  };
+
+  const setReady = async () => {
+    if (!state.room || !state.mySecret) return;
+    await supabase.rpc('set_ready', { p_room_id: state.room.id, p_secret: state.mySecret });
+  };
+
+  const updatePhase = async (phase: GamePhase) => {
+    if (!state.room || !state.mySecret) return;
+    await supabase.rpc('update_phase', { p_room_id: state.room.id, p_secret: state.mySecret, p_phase: phase });
+  };
+
+  const submitGuess = async (targetId: string) => {
+    if (!state.room || !state.mySecret) return;
+    const { error } = await supabase.rpc('submit_guess', { p_room_id: state.room.id, p_secret: state.mySecret, p_target_id: targetId });
+    if (error) setError(error.message);
+  };
+
+  const nextRound = async () => {
+    if (!state.room || !state.mySecret) return;
+    const { error } = await supabase.rpc('next_round', { p_room_id: state.room.id, p_secret: state.mySecret });
+    if (error) setError(error.message);
+  };
+
+  const leaveRoom = async () => {
+    if (state.room?.id && state.mySecret) {
+      await supabase.rpc('leave_room', { p_room_id: state.room.id, p_secret: state.mySecret });
+    }
     setState(defaultState);
   };
 
   const toggleAudio = () => setIsAudioEnabled(!isAudioEnabled);
+  const clearError = () => setError(null);
 
   return (
     <GameContext.Provider
-      value={{
-        state,
-        startNewGame,
-        nextPhase,
-        revealRole,
-        startKingCall,
-        revealMinister,
-        makeMinisterGuess,
-        startNextRound,
-        resetGame,
-        isAudioEnabled,
-        toggleAudio,
-      }}
+      value={{ state, createRoom, joinRoom, startRound, setReady, updatePhase, submitGuess, nextRound, leaveRoom, fetchMyRole, isAudioEnabled, toggleAudio, error, clearError }}
     >
       {children}
     </GameContext.Provider>

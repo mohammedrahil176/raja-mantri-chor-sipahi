@@ -1,45 +1,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield } from 'lucide-react';
-import { useGame } from '../GameContext';
 import { Button } from '../../components/Button';
+import { useGame } from '../GameContext';
 
 export const PhaseMinisterReveal: React.FC = () => {
-  const { state, revealMinister } = useGame();
-  const ministerPlayer = state.players.find(p => p.id === state.ministerPlayerId);
+  const { state, updatePhase } = useGame();
+  
+  const isMinister = state.myRole === 'MINISTER';
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-slate-900/80 backdrop-blur-md p-10 rounded-3xl border border-blue-500/30 max-w-lg w-full shadow-2xl shadow-blue-500/10"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", bounce: 0.5 }}
+        className="mb-12"
       >
-        <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-          className="flex justify-center mb-6"
-        >
-          <Shield className="w-20 h-20 text-blue-500" />
-        </motion.div>
-        
-        <h2 className="text-xl font-bold text-slate-400 mb-2">THE MINISTER IS FOUND</h2>
-        <h1 className="text-4xl font-black text-white mb-8">
-          {ministerPlayer?.name} is the Minister ⚜️
-        </h1>
-
-        <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800 mb-8 relative overflow-hidden">
-          <div className="absolute left-0 top-0 w-1 h-full bg-blue-500" />
-          <p className="text-2xl font-serif italic text-blue-100">
-            "Ji Maharaj! Chor ka pata lagao!"<br/>
-            <span className="text-lg text-blue-400/80 not-italic font-sans mt-2 block">(Yes Your Majesty! Find the Thief!)</span>
-          </p>
-        </div>
-
-        <Button onClick={revealMinister} size="lg" className="w-full bg-blue-600 hover:bg-blue-500 hover:border-blue-400 text-white border-2 border-blue-600 shadow-[0_4px_14px_0_rgba(59,130,246,0.39)]">
-          FIND THE THIEF
-        </Button>
+        <span className="text-8xl mb-6 block drop-shadow-[0_0_30px_rgba(99,102,241,0.6)]">⚜️</span>
+        <h2 className="text-3xl font-bold text-indigo-400 mb-2">THE MINISTER REVEALS THEMSELVES</h2>
       </motion.div>
+
+      {isMinister ? (
+        <div className="space-y-8 max-w-sm w-full">
+          <p className="text-xl font-medium text-slate-300">The King is waiting for you.</p>
+          <Button size="lg" className="w-full text-xl py-6 bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20 text-white border-indigo-400" onClick={() => updatePhase('MINISTER_GUESS')}>
+            "I AM HERE, MY KING!"
+          </Button>
+        </div>
+      ) : (
+        <div className="p-6 bg-slate-900/50 rounded-2xl border border-slate-800 animate-pulse">
+          <p className="text-xl text-slate-400 font-medium">Waiting for the Minister to reveal themselves...</p>
+        </div>
+      )}
     </div>
   );
 };

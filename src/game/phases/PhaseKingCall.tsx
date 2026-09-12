@@ -1,45 +1,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Crown } from 'lucide-react';
-import { useGame } from '../GameContext';
 import { Button } from '../../components/Button';
+import { useGame } from '../GameContext';
 
 export const PhaseKingCall: React.FC = () => {
-  const { state, startKingCall } = useGame();
-  const kingPlayer = state.players.find(p => p.id === state.kingPlayerId);
+  const { state, updatePhase } = useGame();
+  
+  const isKing = state.myRole === 'KING';
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-slate-900/80 backdrop-blur-md p-10 rounded-3xl border border-amber-500/30 max-w-lg w-full shadow-2xl shadow-amber-500/10"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", bounce: 0.5 }}
+        className="mb-12"
       >
-        <motion.div
-          animate={{ y: [0, -10, 0] }}
-          transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-          className="flex justify-center mb-6"
-        >
-          <Crown className="w-20 h-20 text-amber-500" />
-        </motion.div>
-        
-        <h2 className="text-xl font-bold text-slate-400 mb-2">THE KING HAS BEEN CHOSEN</h2>
-        <h1 className="text-4xl font-black text-white mb-8">
-          {kingPlayer?.name} is the King 👑
-        </h1>
-
-        <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800 mb-8 relative overflow-hidden">
-          <div className="absolute left-0 top-0 w-1 h-full bg-amber-500" />
-          <p className="text-2xl font-serif italic text-amber-100">
-            "Mera Mantri Kaun Hai?"<br/>
-            <span className="text-lg text-amber-500/80 not-italic font-sans mt-2 block">(Who is my Minister?)</span>
-          </p>
-        </div>
-
-        <Button onClick={startKingCall} size="lg" className="w-full">
-          CALL MY MINISTER
-        </Button>
+        <span className="text-8xl mb-6 block drop-shadow-[0_0_30px_rgba(245,158,11,0.6)]">👑</span>
+        <h2 className="text-3xl font-bold text-amber-500 mb-2">THE KING HAS BEEN CHOSEN</h2>
       </motion.div>
+
+      {isKing ? (
+        <div className="space-y-8 max-w-sm w-full">
+          <p className="text-2xl font-medium text-slate-300 italic">"Who is my Minister?"</p>
+          <Button size="lg" className="w-full text-xl py-6" onClick={() => updatePhase('MINISTER_REVEAL')}>
+            CALL MY MINISTER
+          </Button>
+        </div>
+      ) : (
+        <div className="p-6 bg-slate-900/50 rounded-2xl border border-slate-800 animate-pulse">
+          <p className="text-xl text-slate-400 font-medium">Waiting for the King to call their Minister...</p>
+        </div>
+      )}
     </div>
   );
 };
