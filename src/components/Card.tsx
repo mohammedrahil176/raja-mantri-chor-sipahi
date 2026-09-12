@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Role } from '../types';
+import type { Role } from '../types';
 import { Crown, Shield, ShieldAlert, UserX, HelpCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 

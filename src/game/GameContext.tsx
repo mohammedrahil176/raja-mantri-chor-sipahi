@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { GameState, GamePhase, Player, Room, Role } from '../types';
+import type { GameState, GamePhase, Player, Room, Role } from '../types';
 import { supabase } from '../lib/supabase';
 
 interface GameContextType {

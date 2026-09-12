@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { useGame } from '../GameContext';
-import { Role } from '../../types';
+import type { Role } from '../../types';
 
 export const PhaseRevealRole: React.FC = () => {
   const { state, setReady } = useGame();
@@ -34,22 +33,22 @@ export const PhaseRevealRole: React.FC = () => {
         >
           {/* Back of Card */}
           <div className="absolute inset-0 backface-hidden">
-            <Card className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700">
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 rounded-2xl">
               <span className="text-6xl mb-4 opacity-50">❓</span>
               <span className="text-xl font-bold text-slate-400">TAP TO REVEAL</span>
-            </Card>
+            </div>
           </div>
 
           {/* Front of Card */}
           <div className="absolute inset-0 backface-hidden rotate-y-180">
-            <Card className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br ${details.color} border-2 border-white/20 shadow-2xl shadow-amber-500/20`}>
+            <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br ${details.color} border-2 border-white/20 shadow-2xl shadow-amber-500/20 rounded-2xl`}>
               <h3 className="text-4xl md:text-5xl font-black text-white drop-shadow-md mb-2">
                 {details.title}
               </h3>
-              <p className="text-xl font-bold text-white/90 bg-black/20 px-4 py-2 rounded-full">
+              <span className="text-xl font-bold text-white/90 bg-black/20 px-4 py-2 rounded-full">
                 {details.points}
-              </p>
-            </Card>
+              </span>
+            </div>
           </div>
         </motion.div>
       </div>

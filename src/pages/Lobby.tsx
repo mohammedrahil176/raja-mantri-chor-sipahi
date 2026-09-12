@@ -40,7 +40,7 @@ export const Lobby: React.FC = () => {
             <Button variant="outline" size="sm" onClick={handleCopy}>
               <Copy className="w-4 h-4 mr-2" /> COPY
             </Button>
-            {navigator.share && (
+            {typeof navigator.share === 'function' && (
               <Button variant="outline" size="sm" onClick={handleShare}>
                 SHARE
               </Button>

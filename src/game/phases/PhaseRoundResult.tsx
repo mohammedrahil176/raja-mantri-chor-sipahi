@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Card } from '../../components/Card';
+
 import { Button } from '../../components/Button';
 import { useGame } from '../GameContext';
 
@@ -37,7 +37,7 @@ export const PhaseRoundResult: React.FC = () => {
       </motion.div>
 
       <div className="w-full max-w-sm space-y-4 mb-8">
-        <Card className="bg-slate-900 border-slate-800 flex justify-between items-center p-4">
+        <div className="bg-slate-900 border border-slate-800 flex justify-between items-center p-4 rounded-2xl">
           <div className="flex items-center gap-3">
             <span className="text-2xl">⚜️</span>
             <div>
@@ -48,9 +48,9 @@ export const PhaseRoundResult: React.FC = () => {
           <div className={`font-black text-xl ${guess_correct ? 'text-green-500' : 'text-slate-600'}`}>
             {guess_correct ? '+500' : '0'}
           </div>
-        </Card>
+        </div>
 
-        <Card className="bg-slate-900 border-slate-800 flex justify-between items-center p-4">
+        <div className="bg-slate-900 border border-slate-800 flex justify-between items-center p-4 rounded-2xl">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🕵️</span>
             <div>
@@ -61,7 +61,7 @@ export const PhaseRoundResult: React.FC = () => {
           <div className={`font-black text-xl ${!guess_correct ? 'text-red-500' : 'text-slate-600'}`}>
             {!guess_correct ? '+500' : '0'}
           </div>
-        </Card>
+        </div>
       </div>
 
       <div className="w-full max-w-sm mb-8">
