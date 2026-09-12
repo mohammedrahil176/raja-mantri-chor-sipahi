@@ -107,12 +107,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [state.room?.id, state.mySecret]);
 
-  // Auto fetch role when entering PLAYER_ROLE_REVEAL
   useEffect(() => {
-    if (state.room?.phase === 'PLAYER_ROLE_REVEAL' && !state.myRole) {
+    const activePhases = ['PLAYER_ROLE_REVEAL', 'KING_CALL', 'MINISTER_REVEAL', 'MINISTER_GUESS'];
+    
+    if (state.room && activePhases.includes(state.room.phase) && !state.myRole) {
       fetchMyRole();
     }
-    if (state.room?.phase === 'LOBBY' || state.room?.phase === 'GAME_OVER') {
+    
+    if (state.room?.phase === 'LOBBY' || state.room?.phase === 'GAME_OVER' || state.room?.phase === 'ROUND_RESULT') {
       setState(s => ({ ...s, myRole: null }));
     }
   }, [state.room?.phase, fetchMyRole, state.myRole]);

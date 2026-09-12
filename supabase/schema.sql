@@ -86,7 +86,7 @@ BEGIN
   SELECT id INTO v_host_id FROM players WHERE room_id = p_room_id AND secret = p_secret AND is_host = TRUE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   SELECT current_round INTO v_round FROM rooms WHERE id = p_room_id;
-  SELECT array_agg(id ORDER BY random()) INTO v_players FROM players WHERE room_id = p_room_id;
+  SELECT array_agg(id) INTO v_players FROM (SELECT id FROM players WHERE room_id = p_room_id ORDER BY random()) sub;
   IF array_length(v_players, 1) != 4 THEN RAISE EXCEPTION 'Need exactly 4 players'; END IF;
   FOR i IN 1..4 LOOP
     INSERT INTO roles (room_id, player_id, round_number, role) VALUES (p_room_id, v_players[i], v_round, v_roles[i])

@@ -15,7 +15,7 @@ export const Home: React.FC<HomeProps> = ({ onHowToPlay, onJoinSuccess }) => {
   const [mode, setMode] = useState<'IDLE' | 'CREATE' | 'JOIN'>('IDLE');
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [rounds, setRounds] = useState(5);
+  const [rounds, setRounds] = useState(3);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreate = async () => {
@@ -104,20 +104,18 @@ export const Home: React.FC<HomeProps> = ({ onHowToPlay, onJoinSuccess }) => {
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white mb-4 focus:outline-none focus:border-amber-500"
             />
             <div className="mb-6">
-              <h3 className="text-sm font-bold text-slate-400 mb-2">Rounds</h3>
-              <div className="flex gap-2">
-                {[3, 5, 10].map(num => (
-                  <button
-                    key={num}
-                    onClick={() => setRounds(num)}
-                    className={`flex-1 py-2 rounded-lg border-2 font-bold ${
-                      rounds === num ? 'border-amber-500 bg-amber-500/20 text-amber-500' : 'border-slate-800 text-slate-400'
-                    }`}
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
+              <h3 className="text-sm font-bold text-slate-400 mb-2">Number of Rounds</h3>
+              <select
+                value={rounds}
+                onChange={(e) => setRounds(Number(e.target.value))}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 font-bold appearance-none cursor-pointer"
+              >
+                <option value={1}>1</option>
+                <option value={3}>3</option>
+                <option value={5}>5</option>
+                <option value={7}>7</option>
+                <option value={10}>10</option>
+              </select>
             </div>
             <Button size="lg" className="w-full mb-3" onClick={handleCreate} disabled={isLoading || !playerName}>
               {isLoading ? 'CREATING...' : 'CREATE ROOM'}

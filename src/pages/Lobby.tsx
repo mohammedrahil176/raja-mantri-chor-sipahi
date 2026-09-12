@@ -33,8 +33,11 @@ export const Lobby: React.FC = () => {
       >
         <div className="mb-8">
           <h2 className="text-slate-400 font-bold tracking-widest text-sm uppercase mb-2">Room Code</h2>
-          <div className="text-5xl font-black text-amber-500 tracking-[0.2em] mb-4">
+          <div className="text-5xl font-black text-amber-500 tracking-[0.2em] mb-2">
             {state.room.code}
+          </div>
+          <div className="text-amber-300/80 font-bold tracking-widest text-sm uppercase mb-6">
+            Game: {state.room.total_rounds} Round{state.room.total_rounds !== 1 ? 's' : ''}
           </div>
           <div className="flex gap-2 justify-center">
             <Button variant="outline" size="sm" onClick={handleCopy}>
