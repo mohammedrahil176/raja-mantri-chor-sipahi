@@ -108,7 +108,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [state.room?.id, state.mySecret]);
 
   useEffect(() => {
-    const activePhases = ['PLAYER_ROLE_REVEAL', 'KING_CALL', 'MINISTER_REVEAL', 'MINISTER_GUESS'];
+    const activePhases = ['PLAYER_ROLE_REVEAL', 'POLICE_GUESS'];
     
     if (state.room && activePhases.includes(state.room.phase) && !state.myRole) {
       fetchMyRole();

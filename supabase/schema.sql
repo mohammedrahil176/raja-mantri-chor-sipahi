@@ -73,26 +73,49 @@ DECLARE v_room_id UUID; v_player_id UUID; v_count INT;
 BEGIN
   SELECT id INTO v_room_id FROM rooms WHERE code = p_code AND status = 'WAITING';
   IF NOT FOUND THEN RAISE EXCEPTION 'Room not found or already started'; END IF;
-  SELECT count(*) INTO v_count FROM players WHERE room_id = v_room_id;
-  IF v_count >= 4 THEN RAISE EXCEPTION 'Room is full'; END IF;
   INSERT INTO players (room_id, name, is_host, secret) VALUES (v_room_id, p_name, FALSE, p_secret) RETURNING id INTO v_player_id;
   RETURN json_build_object('room_id', v_room_id, 'player_id', v_player_id);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION start_round(p_room_id UUID, p_secret UUID) RETURNS void AS $$
-DECLARE v_host_id UUID; v_roles TEXT[] := ARRAY['KING', 'MINISTER', 'POLICE', 'THIEF']; v_players UUID[]; v_round INT; i INT;
+DECLARE 
+  v_host_id UUID; 
+  v_players UUID[]; 
+  v_round INT; 
+  i INT;
+  v_num_players INT;
 BEGIN
   SELECT id INTO v_host_id FROM players WHERE room_id = p_room_id AND secret = p_secret AND is_host = TRUE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Unauthorized'; END IF;
+  
   SELECT current_round INTO v_round FROM rooms WHERE id = p_room_id;
+  
   SELECT array_agg(id) INTO v_players FROM (SELECT id FROM players WHERE room_id = p_room_id ORDER BY random()) sub;
-  IF array_length(v_players, 1) != 4 THEN RAISE EXCEPTION 'Need exactly 4 players'; END IF;
-  FOR i IN 1..4 LOOP
-    INSERT INTO roles (room_id, player_id, round_number, role) VALUES (p_room_id, v_players[i], v_round, v_roles[i])
-    ON CONFLICT (room_id, player_id, round_number) DO UPDATE SET role = EXCLUDED.role;
+  v_num_players := array_length(v_players, 1);
+  
+  IF v_num_players < 4 THEN RAISE EXCEPTION 'Need at least 4 players'; END IF;
+  
+  -- Assign roles randomly based on shuffled array
+  INSERT INTO roles (room_id, player_id, round_number, role) VALUES (p_room_id, v_players[1], v_round, 'RAJA') ON CONFLICT (room_id, player_id, round_number) DO UPDATE SET role = EXCLUDED.role;
+  INSERT INTO roles (room_id, player_id, round_number, role) VALUES (p_room_id, v_players[2], v_round, 'MANTRI') ON CONFLICT (room_id, player_id, round_number) DO UPDATE SET role = EXCLUDED.role;
+  INSERT INTO roles (room_id, player_id, round_number, role) VALUES (p_room_id, v_players[3], v_round, 'CHOR') ON CONFLICT (room_id, player_id, round_number) DO UPDATE SET role = EXCLUDED.role;
+  
+  FOR i IN 4..v_num_players LOOP
+    INSERT INTO roles (room_id, player_id, round_number, role) VALUES (p_room_id, v_players[i], v_round, 'SIPAHI') ON CONFLICT (room_id, player_id, round_number) DO UPDATE SET role = EXCLUDED.role;
   END LOOP;
-  UPDATE rooms SET status = 'PLAYING', phase = 'PLAYER_ROLE_REVEAL', king_id = NULL, minister_id = NULL, thief_id = NULL, police_id = NULL, guessed_thief_id = NULL, guess_correct = NULL WHERE id = p_room_id;
+  
+  UPDATE rooms SET 
+    status = 'PLAYING', 
+    phase = 'PLAYER_ROLE_REVEAL', 
+    king_id = NULL, 
+    minister_id = NULL, 
+    thief_id = NULL, 
+    police_id = NULL, 
+    guessed_thief_id = NULL, 
+    guess_correct = NULL 
+  WHERE id = p_room_id;
+  
   UPDATE players SET is_ready = FALSE WHERE room_id = p_room_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -107,51 +130,63 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION set_ready(p_room_id UUID, p_secret UUID) RETURNS void AS $$
-DECLARE v_ready_count INT;
+DECLARE 
+  v_ready_count INT;
+  v_total_players INT;
 BEGIN
   UPDATE players SET is_ready = TRUE WHERE room_id = p_room_id AND secret = p_secret;
-  SELECT count(*) INTO v_ready_count FROM players WHERE room_id = p_room_id AND is_ready = TRUE;
-  IF v_ready_count = 4 THEN
-    UPDATE rooms SET phase = 'KING_CALL' WHERE id = p_room_id;
-  END IF;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION update_phase(p_room_id UUID, p_secret UUID, p_phase TEXT) RETURNS void AS $$
-DECLARE v_round INT; v_role TEXT; v_player_id UUID;
-BEGIN
-  SELECT id INTO v_player_id FROM players WHERE room_id = p_room_id AND secret = p_secret;
-  IF NOT FOUND THEN RAISE EXCEPTION 'Unauthorized'; END IF;
-  SELECT current_round INTO v_round FROM rooms WHERE id = p_room_id;
-  SELECT role INTO v_role FROM roles WHERE room_id = p_room_id AND player_id = v_player_id AND round_number = v_round;
   
-  IF p_phase = 'MINISTER_REVEAL' AND v_role = 'KING' THEN
-    UPDATE rooms SET phase = p_phase, king_id = v_player_id WHERE id = p_room_id;
-  ELSIF p_phase = 'MINISTER_GUESS' AND v_role = 'MINISTER' THEN
-    UPDATE rooms SET phase = p_phase, minister_id = v_player_id WHERE id = p_room_id;
-  ELSE
-    UPDATE rooms SET phase = p_phase WHERE id = p_room_id;
+  SELECT count(*) INTO v_ready_count FROM players WHERE room_id = p_room_id AND is_ready = TRUE;
+  SELECT count(*) INTO v_total_players FROM players WHERE room_id = p_room_id;
+  
+  IF v_ready_count = v_total_players THEN
+    UPDATE rooms SET phase = 'POLICE_GUESS' WHERE id = p_room_id;
   END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION submit_guess(p_room_id UUID, p_secret UUID, p_target_id UUID) RETURNS void AS $$
-DECLARE v_minister_id UUID; v_actual_thief_id UUID; v_correct BOOLEAN; v_round INT; v_king_id UUID; v_police_id UUID; v_total_rounds INT;
+DECLARE 
+  v_police_id UUID; 
+  v_actual_thief_id UUID; 
+  v_correct BOOLEAN; 
+  v_round INT; 
+  v_king_id UUID; 
+  v_minister_id UUID;
+  v_total_rounds INT;
 BEGIN
   SELECT current_round, total_rounds INTO v_round, v_total_rounds FROM rooms WHERE id = p_room_id;
-  SELECT p.id INTO v_minister_id FROM players p JOIN roles r ON p.id = r.player_id WHERE p.room_id = p_room_id AND p.secret = p_secret AND r.role = 'MINISTER' AND r.round_number = v_round;
-  IF NOT FOUND THEN RAISE EXCEPTION 'Only minister can guess'; END IF;
-  SELECT player_id INTO v_actual_thief_id FROM roles WHERE room_id = p_room_id AND round_number = v_round AND role = 'THIEF';
-  SELECT player_id INTO v_king_id FROM roles WHERE room_id = p_room_id AND round_number = v_round AND role = 'KING';
-  SELECT player_id INTO v_police_id FROM roles WHERE room_id = p_room_id AND round_number = v_round AND role = 'POLICE';
+  
+  -- Verify caller is a SIPAHI
+  SELECT p.id INTO v_police_id FROM players p JOIN roles r ON p.id = r.player_id 
+    WHERE p.room_id = p_room_id AND p.secret = p_secret AND r.role = 'SIPAHI' AND r.round_number = v_round;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Only SIPAHI can guess'; END IF;
+  
+  SELECT player_id INTO v_actual_thief_id FROM roles WHERE room_id = p_room_id AND round_number = v_round AND role = 'CHOR';
+  SELECT player_id INTO v_king_id FROM roles WHERE room_id = p_room_id AND round_number = v_round AND role = 'RAJA';
+  SELECT player_id INTO v_minister_id FROM roles WHERE room_id = p_room_id AND round_number = v_round AND role = 'MANTRI';
+  
   v_correct := (p_target_id = v_actual_thief_id);
   
   UPDATE players SET score = score + 1000 WHERE id = v_king_id;
-  UPDATE players SET score = score + 300 WHERE id = v_police_id;
-  IF v_correct THEN UPDATE players SET score = score + 500 WHERE id = v_minister_id;
-  ELSE UPDATE players SET score = score + 500 WHERE id = v_actual_thief_id; END IF;
+  UPDATE players SET score = score + 500 WHERE id = v_minister_id;
   
-  UPDATE rooms SET phase = 'ROUND_RESULT', guessed_thief_id = p_target_id, guess_correct = v_correct, thief_id = v_actual_thief_id, king_id = v_king_id, minister_id = v_minister_id, police_id = v_police_id WHERE id = p_room_id;
+  IF v_correct THEN 
+    UPDATE players SET score = score + 300 WHERE room_id = p_room_id AND id IN (SELECT player_id FROM roles WHERE room_id = p_room_id AND round_number = v_round AND role = 'SIPAHI');
+  ELSE 
+    UPDATE players SET score = score - 300 WHERE room_id = p_room_id AND id IN (SELECT player_id FROM roles WHERE room_id = p_room_id AND round_number = v_round AND role = 'SIPAHI');
+    UPDATE players SET score = score + 500 WHERE id = v_actual_thief_id; 
+  END IF;
+  
+  UPDATE rooms SET 
+    phase = 'ROUND_RESULT', 
+    guessed_thief_id = p_target_id, 
+    guess_correct = v_correct, 
+    thief_id = v_actual_thief_id, 
+    king_id = v_king_id, 
+    minister_id = v_minister_id, 
+    police_id = v_police_id 
+  WHERE id = p_room_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

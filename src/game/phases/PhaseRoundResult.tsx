@@ -9,16 +9,16 @@ export const PhaseRoundResult: React.FC = () => {
   
   if (!state.room) return null;
 
-  const { guess_correct, guessed_thief_id, thief_id, minister_id } = state.room;
+  const { guess_correct, guessed_thief_id, thief_id, police_id } = state.room;
   
-  const minister = state.players.find(p => p.id === minister_id);
+  const police = state.players.find(p => p.id === police_id);
   const thief = state.players.find(p => p.id === thief_id);
   const guessedPlayer = state.players.find(p => p.id === guessed_thief_id);
   
   const isHost = state.players.find(p => p.id === state.myPlayerId)?.is_host;
 
   return (
-    <div className="flex-1 flex flex-col items-center p-6 pt-20">
+    <div className="flex-1 flex flex-col items-center p-6 pt-20 overflow-y-auto">
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -26,27 +26,52 @@ export const PhaseRoundResult: React.FC = () => {
         className="text-center mb-8"
       >
         <span className="text-6xl mb-4 block">
-          {guess_correct ? '🎉' : '❌'}
+          {guess_correct ? '🎯' : '❌'}
         </span>
         <h2 className={`text-4xl font-black mb-2 ${guess_correct ? 'text-green-500' : 'text-red-500'}`}>
           {guess_correct ? 'CORRECT!' : 'WRONG!'}
         </h2>
-        <p className="text-xl text-slate-300">
-          Minister {minister?.name} guessed {guessedPlayer?.name}
+        <p className="text-xl text-slate-300 font-bold mb-2">
+          {guess_correct ? 'Police caught the Chor!' : 'The Police failed to catch the Chor.'}
+        </p>
+        <p className="text-lg text-slate-400">
+          Police ({police?.name || 'Police'}) guessed {guessedPlayer?.name}
         </p>
       </motion.div>
 
       <div className="w-full max-w-sm space-y-4 mb-8">
         <div className="bg-slate-900 border border-slate-800 flex justify-between items-center p-4 rounded-2xl">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">⚜️</span>
+            <span className="text-2xl">👑</span>
             <div>
-              <div className="text-sm text-slate-400 font-bold">MINISTER</div>
-              <div className="font-bold text-lg text-slate-200">{minister?.name}</div>
+              <div className="text-sm text-slate-400 font-bold">RAJA</div>
+              <div className="font-bold text-lg text-slate-200">{state.players.find(p => p.id === state.room?.king_id)?.name}</div>
             </div>
           </div>
-          <div className={`font-black text-xl ${guess_correct ? 'text-green-500' : 'text-slate-600'}`}>
-            {guess_correct ? '+500' : '0'}
+          <div className="font-black text-xl text-green-500">+1000</div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 flex justify-between items-center p-4 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🧑‍💼</span>
+            <div>
+              <div className="text-sm text-slate-400 font-bold">MANTRI</div>
+              <div className="font-bold text-lg text-slate-200">{state.players.find(p => p.id === state.room?.minister_id)?.name}</div>
+            </div>
+          </div>
+          <div className="font-black text-xl text-green-500">+500</div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 flex justify-between items-center p-4 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">👮</span>
+            <div>
+              <div className="text-sm text-slate-400 font-bold">SIPAHI (POLICE)</div>
+              <div className="font-bold text-lg text-slate-200">{police?.name || 'Police'}</div>
+            </div>
+          </div>
+          <div className={`font-black text-xl ${guess_correct ? 'text-green-500' : 'text-red-500'}`}>
+            {guess_correct ? '+300' : '-300'}
           </div>
         </div>
 
@@ -54,11 +79,11 @@ export const PhaseRoundResult: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className="text-2xl">🕵️</span>
             <div>
-              <div className="text-sm text-slate-400 font-bold">THIEF</div>
+              <div className="text-sm text-slate-400 font-bold">CHOR (THIEF)</div>
               <div className="font-bold text-lg text-slate-200">{thief?.name}</div>
             </div>
           </div>
-          <div className={`font-black text-xl ${!guess_correct ? 'text-red-500' : 'text-slate-600'}`}>
+          <div className={`font-black text-xl ${!guess_correct ? 'text-green-500' : 'text-slate-600'}`}>
             {!guess_correct ? '+500' : '0'}
           </div>
         </div>
@@ -71,7 +96,7 @@ export const PhaseRoundResult: React.FC = () => {
             <div key={player.id} className="flex justify-between items-center p-3 border-b border-slate-800/50 last:border-0">
               <div className="flex items-center gap-3">
                 <span className="text-slate-500 font-bold w-4">{idx + 1}.</span>
-                <span className={`font-medium ${player.id === state.myPlayerId ? 'text-amber-400 font-bold' : 'text-slate-300'}`}>
+                <span className={`font-medium ${player.id === state.myPlayerId ? 'text-blue-400 font-bold' : 'text-slate-300'}`}>
                   {player.name}
                 </span>
               </div>

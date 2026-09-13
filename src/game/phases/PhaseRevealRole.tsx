@@ -11,10 +11,10 @@ export const PhaseRevealRole: React.FC = () => {
 
   const getRoleDetails = (role: Role | null) => {
     switch (role) {
-      case 'KING': return { title: 'KING 👑', points: '1000 POINTS', color: 'from-amber-400 to-yellow-600' };
-      case 'MINISTER': return { title: 'MINISTER ⚜️', points: '500 POINTS', color: 'from-blue-400 to-indigo-600' };
-      case 'POLICE': return { title: 'SIPAHI 👮', points: '300 POINTS', color: 'from-emerald-400 to-green-600' };
-      case 'THIEF': return { title: 'THIEF 🕵️', points: '0 POINTS', color: 'from-red-400 to-rose-600' };
+      case 'RAJA': return { title: 'RAJA 👑', points: '1000 POINTS', color: 'from-amber-400 to-yellow-600' };
+      case 'MANTRI': return { title: 'MANTRI 🧑‍💼', points: '500 POINTS', color: 'from-blue-400 to-indigo-600' };
+      case 'SIPAHI': return { title: 'SIPAHI 👮', points: '300 POINTS', color: 'from-emerald-400 to-green-600' };
+      case 'CHOR': return { title: 'CHOR 🕵️', points: '0 POINTS', color: 'from-red-400 to-rose-600' };
       default: return { title: 'LOADING...', points: '', color: 'from-slate-400 to-slate-600' };
     }
   };

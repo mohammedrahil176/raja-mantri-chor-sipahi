@@ -2,9 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGame } from './GameContext';
 import { PhaseRevealRole } from './phases/PhaseRevealRole';
-import { PhaseKingCall } from './phases/PhaseKingCall';
-import { PhaseMinisterReveal } from './phases/PhaseMinisterReveal';
-import { PhaseMinisterGuess } from './phases/PhaseMinisterGuess';
+import { PhasePoliceGuess } from './phases/PhasePoliceGuess';
 import { PhaseRoundResult } from './phases/PhaseRoundResult';
 import { PhaseGameOver } from './phases/PhaseGameOver';
 
@@ -17,12 +15,8 @@ export const GameEngine: React.FC = () => {
     switch (state.room!.phase) {
       case 'PLAYER_ROLE_REVEAL':
         return <PhaseRevealRole key="reveal" />;
-      case 'KING_CALL':
-        return <PhaseKingCall key="king" />;
-      case 'MINISTER_REVEAL':
-        return <PhaseMinisterReveal key="minister-reveal" />;
-      case 'MINISTER_GUESS':
-        return <PhaseMinisterGuess key="guess" />;
+      case 'POLICE_GUESS':
+        return <PhasePoliceGuess key="guess" />;
       case 'ROUND_RESULT':
         return <PhaseRoundResult key="result" />;
       case 'GAME_OVER':

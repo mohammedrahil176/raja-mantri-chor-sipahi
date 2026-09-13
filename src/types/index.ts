@@ -1,4 +1,4 @@
-export type Role = 'KING' | 'MINISTER' | 'POLICE' | 'THIEF';
+export type Role = 'RAJA' | 'MANTRI' | 'SIPAHI' | 'CHOR';
 
 export interface Player {
   id: string;
@@ -13,9 +13,7 @@ export interface Player {
 export type GamePhase = 
   | 'LOBBY'
   | 'PLAYER_ROLE_REVEAL' 
-  | 'KING_CALL' 
-  | 'MINISTER_REVEAL' 
-  | 'MINISTER_GUESS' 
+  | 'POLICE_GUESS'
   | 'ROUND_RESULT' 
   | 'GAME_OVER';
 

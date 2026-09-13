@@ -13,30 +13,30 @@ interface ChitCardProps {
 }
 
 const roleConfig = {
-  KING: {
+  RAJA: {
     icon: Crown,
-    title: 'KING',
+    title: 'RAJA',
     points: 1000,
     colors: 'from-yellow-400 to-amber-600',
     text: 'text-amber-100',
   },
-  MINISTER: {
+  MANTRI: {
     icon: Shield,
-    title: 'MINISTER',
+    title: 'MANTRI',
     points: 500,
     colors: 'from-blue-500 to-indigo-700',
     text: 'text-blue-100',
   },
-  POLICE: {
+  SIPAHI: {
     icon: ShieldAlert,
-    title: 'POLICE',
+    title: 'SIPAHI',
     points: 300,
-    colors: 'from-slate-500 to-slate-700',
-    text: 'text-slate-100',
+    colors: 'from-emerald-500 to-green-700',
+    text: 'text-emerald-100',
   },
-  THIEF: {
+  CHOR: {
     icon: UserX,
-    title: 'THIEF',
+    title: 'CHOR',
     points: 0,
     colors: 'from-red-500 to-rose-700',
     text: 'text-rose-100',
