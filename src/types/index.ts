@@ -1,4 +1,4 @@
-export type Role = 'RAJA' | 'MANTRI' | 'SIPAHI' | 'CHOR';
+export type Role = 'RAJA' | 'MANTRI' | 'SIPAHI' | 'CHOR' | 'KING' | 'MINISTER' | 'POLICE' | 'THIEF';
 
 export interface Player {
   id: string;

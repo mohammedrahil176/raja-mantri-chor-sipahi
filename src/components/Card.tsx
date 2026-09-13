@@ -13,34 +13,14 @@ interface ChitCardProps {
 }
 
 const roleConfig = {
-  RAJA: {
-    icon: Crown,
-    title: 'RAJA',
-    points: 1000,
-    colors: 'from-yellow-400 to-amber-600',
-    text: 'text-amber-100',
-  },
-  MANTRI: {
-    icon: Shield,
-    title: 'MANTRI',
-    points: 500,
-    colors: 'from-blue-500 to-indigo-700',
-    text: 'text-blue-100',
-  },
-  SIPAHI: {
-    icon: ShieldAlert,
-    title: 'SIPAHI',
-    points: 300,
-    colors: 'from-emerald-500 to-green-700',
-    text: 'text-emerald-100',
-  },
-  CHOR: {
-    icon: UserX,
-    title: 'CHOR',
-    points: 0,
-    colors: 'from-red-500 to-rose-700',
-    text: 'text-rose-100',
-  },
+  RAJA: { icon: Crown, title: 'RAJA', points: 1000, colors: 'from-yellow-400 to-amber-600', text: 'text-amber-100' },
+  KING: { icon: Crown, title: 'RAJA', points: 1000, colors: 'from-yellow-400 to-amber-600', text: 'text-amber-100' },
+  MANTRI: { icon: Shield, title: 'MANTRI', points: 500, colors: 'from-blue-500 to-indigo-700', text: 'text-blue-100' },
+  POLICE: { icon: Shield, title: 'MANTRI', points: 500, colors: 'from-blue-500 to-indigo-700', text: 'text-blue-100' },
+  SIPAHI: { icon: ShieldAlert, title: 'SIPAHI', points: 300, colors: 'from-emerald-500 to-green-700', text: 'text-emerald-100' },
+  MINISTER: { icon: ShieldAlert, title: 'SIPAHI', points: 300, colors: 'from-emerald-500 to-green-700', text: 'text-emerald-100' },
+  CHOR: { icon: UserX, title: 'CHOR', points: 0, colors: 'from-red-500 to-rose-700', text: 'text-rose-100' },
+  THIEF: { icon: UserX, title: 'CHOR', points: 0, colors: 'from-red-500 to-rose-700', text: 'text-rose-100' },
 };
 
 export const ChitCard: React.FC<ChitCardProps> = ({ role, revealed, onClick, className, playerName }) => {
