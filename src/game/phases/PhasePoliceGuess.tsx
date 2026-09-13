@@ -59,7 +59,7 @@ export const PhasePoliceGuess: React.FC = () => {
           </div>
         </motion.div>
       ) : (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center w-full max-w-sm">
            {state.myRole === 'RAJA' && (
              <div className="mb-6">
                <div className="text-6xl mb-4">👑</div>
@@ -85,10 +85,23 @@ export const PhasePoliceGuess: React.FC = () => {
              </div>
            )}
            {!state.myRole && (
-             <div className="p-6 bg-slate-900/50 rounded-2xl border border-slate-800 animate-pulse">
+             <div className="p-6 bg-slate-900/50 rounded-2xl border border-slate-800 animate-pulse mb-6">
                <p className="text-xl text-slate-400 font-medium">Wait for the Police to make a decision...</p>
              </div>
            )}
+
+          <div className="grid grid-cols-1 gap-4 w-full mt-4 opacity-50 pointer-events-none">
+            {suspects.map((player) => (
+              <Button
+                key={player.id}
+                variant="outline"
+                className="w-full text-xl py-6 h-auto flex flex-col items-center justify-center gap-2 border-slate-700 bg-slate-800"
+                disabled
+              >
+                <span>{player.name}</span>
+              </Button>
+            ))}
+          </div>
         </div>
       )}
     </div>
