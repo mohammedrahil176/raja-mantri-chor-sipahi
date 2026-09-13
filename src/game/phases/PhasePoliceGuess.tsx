@@ -7,13 +7,9 @@ export const PhasePoliceGuess: React.FC = () => {
   const { state, submitGuess } = useGame();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   
-  const isPolice = state.myRole === 'SIPAHI' || state.myRole === 'MINISTER';
+  const isPolice = state.myRole === 'SIPAHI';
 
   // Suspects are everyone except the current player
-  // But wait, the requirements say: "Show the list of eligible players. Example: Who is the Chor? [ Player A ] [ Player B ] [ Player C ] [ Player D ]"
-  // It's probably best to show all players except the current SIPAHI who is guessing. Or just all players except SIPAHI? 
-  // Wait, if there are multiple Sipahis, can a Sipahi guess another Sipahi? Yes, because they don't know who the other Sipahis are. 
-  // Everyone is a suspect to the Police except themselves.
   const suspects = state.players.filter(p => p.id !== state.myPlayerId);
 
   return (
@@ -60,7 +56,7 @@ export const PhasePoliceGuess: React.FC = () => {
         </motion.div>
       ) : (
         <div className="flex flex-col items-center w-full max-w-sm">
-           {(state.myRole === 'RAJA' || state.myRole === 'KING') && (
+           {state.myRole === 'RAJA' && (
              <div className="mb-6">
                <div className="text-6xl mb-4">👑</div>
                <h2 className="text-2xl font-bold text-amber-500 mb-2">You are RAJA</h2>
@@ -68,7 +64,7 @@ export const PhasePoliceGuess: React.FC = () => {
                <p className="text-slate-400">Wait for the Police to make a decision.</p>
              </div>
            )}
-           {(state.myRole === 'MANTRI' || state.myRole === 'POLICE') && (
+           {state.myRole === 'MANTRI' && (
              <div className="mb-6">
                <div className="text-6xl mb-4">🧑‍💼</div>
                <h2 className="text-2xl font-bold text-purple-500 mb-2">You are MANTRI</h2>
@@ -76,7 +72,7 @@ export const PhasePoliceGuess: React.FC = () => {
                <p className="text-slate-400">Wait for the Police.</p>
              </div>
            )}
-           {(state.myRole === 'CHOR' || state.myRole === 'THIEF') && (
+           {state.myRole === 'CHOR' && (
              <div className="mb-6">
                <div className="text-6xl mb-4">🕵️</div>
                <h2 className="text-2xl font-bold text-red-500 mb-2">You are CHOR</h2>
